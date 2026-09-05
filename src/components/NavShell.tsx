@@ -67,6 +67,31 @@ export default function NavShell() {
             Add User
           </NavLink>
         )}
+        {appUser?.role === 'hq' && (
+          <NavLink to="/staff" className={linkClass}>
+            Staff
+          </NavLink>
+        )}
+        {appUser?.role === 'hq' && (
+          <NavLink to="/outlets" className={linkClass}>
+            Outlets
+          </NavLink>
+        )}
+        {appUser?.role === 'hq' && (
+          <NavLink to="/alert-recipients" className={linkClass}>
+            Alerts
+          </NavLink>
+        )}
+        <NavLink to="/my-shifts" className={linkClass}>
+          My Shifts
+        </NavLink>
+        {(appUser?.role === 'hq' ||
+          appUser?.role === 'audit' ||
+          appUser?.role === 'manager') && (
+          <NavLink to="/disputes" className={linkClass}>
+            Disputes
+          </NavLink>
+        )}
         <NavLink to="/bills" className={linkClass}>
           Bills
         </NavLink>

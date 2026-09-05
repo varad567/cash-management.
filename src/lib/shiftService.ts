@@ -101,6 +101,22 @@ export async function closeShift({ registerId, countedClosing, closedBy }: Close
   if (fetchError) throw fetchError;
 
   const r = register as ShiftRegister;
+
+  if (r.status !== 'open') {
+    // Covers the common case: someone else already closed this shift
+    // (e.g. two people on the same close screen, or a stale tab) —
+    // give a clear message instead of letting the DB-level immutability
+    // guard's exception surface as-is. That guard (migration 0024) is
+    // still the real backstop for a true race between two simultaneous
+    // close attempts — this check just makes the common, non-racy case
+    // read nicely.
+    throw new Error(
+      r.closed_at
+        ? `This shift was already closed at ${new Date(r.closed_at).toLocaleString()}.`
+        : 'This shift is no longer open.'
+    );
+  }
+
   const expectedClosing = computeExpectedClosing(r);
 
   const { data, error } = await supabase

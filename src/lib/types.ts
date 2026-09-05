@@ -148,3 +148,25 @@ export interface QueuedAction {
   failed?: boolean;
   error_message?: string;
 }
+
+export interface AlertRecipient {
+  id: string;
+  email: string;
+  label: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ShiftDispute {
+  id: string;
+  register_id: string;
+  outlet_id: string;
+  raised_by: string;
+  claimed_counted_closing: number | null;
+  reason: string;
+  status: 'open' | 'reviewed' | 'resolved';
+  hq_notes: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+}

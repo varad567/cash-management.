@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { initOfflineSync } from './lib/offlineQueue';
 import { getOpenRegister } from './lib/shiftService';
+import { useIdleLogout } from './lib/useIdleLogout';
 import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
 import ShiftOpen from './pages/ShiftOpen';
@@ -28,19 +29,32 @@ const ShiftHistory = lazy(() => import('./pages/ShiftHistory'));
 const AuditLog = lazy(() => import('./pages/AuditLog'));
 const BillsBrowser = lazy(() => import('./pages/BillsBrowser'));
 const AddUser = lazy(() => import('./pages/AddUser'));
+const OutletManagement = lazy(() => import('./pages/OutletManagement'));
+const StaffManagement = lazy(() => import('./pages/StaffManagement'));
+const AlertRecipients = lazy(() => import('./pages/AlertRecipients'));
+const MyShifts = lazy(() => import('./pages/MyShifts'));
+const Disputes = lazy(() => import('./pages/Disputes'));
 
 function PageFallback() {
   return <div className="p-6 text-sm text-slate-400">Loading…</div>;
 }
 
 function Shell() {
-  const { appUser, loading, error, passwordRecovery } = useAuth();
+  const { appUser, loading, error, passwordRecovery, signOut } = useAuth();
   const [register, setRegister] = useState<ShiftRegister | null>(null);
   const [registerLoading, setRegisterLoading] = useState(true);
 
   useEffect(() => {
     initOfflineSync();
   }, []);
+
+  // Counter phones are shared between staff — auto-sign-out after
+  // inactivity so a walked-away session isn't left open on a
+  // financial system. HQ/audit aren't tied to a shared till, so
+  // they're left out of this by default.
+  useIdleLogout(() => {
+    if (appUser && appUser.outlet_id) void signOut();
+  });
 
   // HQ and audit roles aren't tied to a till, so they skip shift
   // gating entirely and land on a cross-outlet overview instead of
@@ -113,6 +127,15 @@ function Shell() {
             {!isHqOrAudit && <Route path="expenses" element={<Expenses />} />}
             {isHqOrAudit && <Route path="expense-approvals" element={<ExpenseApprovals />} />}
             {appUser.role === 'hq' && <Route path="add-user" element={<AddUser />} />}
+            {appUser.role === 'hq' && <Route path="outlets" element={<OutletManagement />} />}
+            {appUser.role === 'hq' && <Route path="staff" element={<StaffManagement />} />}
+            {appUser.role === 'hq' && (
+              <Route path="alert-recipients" element={<AlertRecipients />} />
+            )}
+            <Route path="my-shifts" element={<MyShifts />} />
+            {['hq', 'audit', 'manager'].includes(appUser.role) && (
+              <Route path="disputes" element={<Disputes />} />
+            )}
             {!isHqOrAudit && <Route path="deposits" element={<CashDeposits />} />}
             {!isHqOrAudit && <Route path="customer-credits" element={<CustomerCredits />} />}
             {!isHqOrAudit && <Route path="returns" element={<Returns />} />}
